@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'aws-sdk-s3'
-require './services/log'
 require 'dotenv/load'
 
 module Services
@@ -16,8 +15,6 @@ module Services
       s3 = Aws::S3::Resource.new
       obj = s3.bucket(BUCKET).object('tomorrow.html')
       obj.put(body: content, acl: PUBLIC)
-    rescue StandardError => e
-      Services::Log.error(e.message)
     end
   end
 end

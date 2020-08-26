@@ -44,6 +44,17 @@ module Services
       Aws::S3::Client.new.list_objects_v2(options).contents
     end
 
+    def list_folders
+      options = {
+        bucket: @bucket,
+        delimiter: '/'
+      }
+
+      Aws::S3::Client.new.list_objects_v2(options)
+                     .common_prefixes
+                     .collect(&:prefix)
+    end
+
     def list_names(options = {})
       list(options).collect(&:key)
     end

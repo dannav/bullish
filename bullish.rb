@@ -31,6 +31,7 @@ class Bullish
   end
 
   def upload
+    p 'hre'
     subject = @edition.subject
     content = @edition.content
 

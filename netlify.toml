@@ -1,5 +1,6 @@
 [dev]
   publish = "./site/"
+
 [build]
   functions = "./site"
 

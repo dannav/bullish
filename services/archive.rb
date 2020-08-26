@@ -8,16 +8,12 @@ require 'active_support/inflector'
 
 module Services
   class Archive
-    # save in S3 by year then month
-    # one main index.html as archive root with current month
-    # every new month archive root index in its month
-    # generate an archive index ordered by date pulling folders from s3 / will hit index in each month
-
     YEAR = Time.now.year
     MONTH = Time.now.month
 
     FOLDER = "#{YEAR}-#{MONTH}"
     BUCKET = 'bullish-archive'
+    MONTH_YEAR_FORMAT = '%B %Y'
 
     def upload(subject, content)
       # create friendly URL
@@ -29,7 +25,7 @@ module Services
       Services::S3.new(BUCKET).upload(name, content, tags)
     end
 
-    def build
+    def build_index
       s3 = Services::S3.new(BUCKET)
 
       archive = s3.list({ prefix: FOLDER }).map do |file|
@@ -46,7 +42,7 @@ module Services
         }
       end.compact
 
-      heading = DateTime.now.strftime('%B %Y')
+      heading = DateTime.now.strftime(MONTH_YEAR_FORMAT)
       result = Templates::Element.render('archive', { archive: archive, heading: heading })
 
       # save in archive root path
@@ -54,6 +50,22 @@ module Services
 
       # copy to folder so each month has an index
       s3.copy('index.html', "#{FOLDER}/index.html")
+    end
+
+    def build_directory
+      s3 = Services::S3.new(BUCKET)
+
+      index = s3.list_folders.map do |folder|
+        # format folder like 2020-8 to August 2020
+        title = Date.strptime(folder, '%Y-%m').strftime(MONTH_YEAR_FORMAT)
+
+        { url: "/archive/#{folder}", title: title }
+      end
+
+      result = Templates::Element.render('archive_index', { index: index })
+
+      # save in archive root path
+      s3.upload('directory.html', result)
     end
   end
 end
